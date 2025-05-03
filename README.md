@@ -120,6 +120,57 @@ When you attempt to make a Git commit:
 4. If matches are found, the commit is blocked with detailed information about the findings
 5. You must either fix the issues or explicitly override the check
 
+## Configuration file
+
+SecureGit-Hook can be customized through a JSON configuration file. The hook looks for:
+
+1. `securegit.json` in your repository root (for repository-specific settings)
+2. `~/.securegit.json` in your home directory (for user-specific settings)
+
+### Configuration Options
+
+```json
+{
+    "enabled": true,               // Set to false to disable all checks
+    "valid_extensions": [          // File extensions to scan
+        ".py", ".js", ".ts"
+    ],
+    "prohibited_files": [          // Files that should never be committed
+        ".env", "credentials.json"
+    ],
+    "prohibited_patterns": [       // Regex patterns for prohibited files
+        ".*\\.key$", ".*\\.pem$"
+    ],
+    "patterns": [                  // Regex patterns for secret detection
+        "API_KEY\\s*=\\s*[\"'].*[\"']",
+        "PASSWORD\\s*=\\s*[\"'].*[\"']"
+    ]
+}
+```
+
+### Extending Default Configurations
+
+You can extend the default arrays in the configuration by using the `_expand` suffix:
+
+```json
+{
+    "prohibited_files_expand": [
+        "secrets.json", 
+        "custom_credentials.yml"
+    ],
+    "valid_extensions_expand": [
+        ".jsx", 
+        ".tsx"
+    ],
+    "patterns_expand": [
+        "MY_CUSTOM_SECRET\\s*=\\s*[\"'].*[\"']"
+    ],
+    "prohibited_patterns_expand": [
+        ".*\\.secret$"
+    ]
+}
+```
+
 ## Best Practices
 
 - **Never commit secrets**: Use environment variables or dedicated secret management solutions

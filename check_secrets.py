@@ -10,19 +10,48 @@ import json
 DEFAULT_CONFIG = {
     "enabled": True,
     "valid_extensions": [
-        ".py", ".js", ".ts", ".go", ".env", ".json", ".yaml", 
-        ".yml", ".xml", ".conf", ".ini", ".toml", ".rb", ".php",
+        ".py",
+        ".js",
+        ".ts",
+        ".go",
+        ".env",
+        ".json",
+        ".yaml",
+        ".yml",
+        ".xml",
+        ".conf",
+        ".ini",
+        ".toml",
+        ".rb",
+        ".php",
     ],
     "prohibited_files": [
-        ".env", ".env.local", ".env.development", ".env.test", ".env.production",
-        "credentials.json", "config.local.json", "secrets.yaml", ".htpasswd",
-        "id_rsa", "id_dsa", ".keystore", ".p12", ".pfx", 
-        "oauth_token.json", "service-account.json",
+        ".env",
+        ".env.local",
+        ".env.development",
+        ".env.test",
+        ".env.production",
+        "credentials.json",
+        "config.local.json",
+        "secrets.yaml",
+        ".htpasswd",
+        "id_rsa",
+        "id_dsa",
+        ".keystore",
+        ".p12",
+        ".pfx",
+        "oauth_token.json",
+        "service-account.json",
     ],
     "prohibited_patterns": [
-        r".*\.pem$", r".*\.key$", r".*\.pkcs12$", r".*\.jks$",
-        r".*secret.*\.json$", r".*password.*\.txt$", 
-        r".*credential.*\.json$", r".*\.keystore$",
+        r".*\.pem$",
+        r".*\.key$",
+        r".*\.pkcs12$",
+        r".*\.jks$",
+        r".*secret.*\.json$",
+        r".*password.*\.txt$",
+        r".*credential.*\.json$",
+        r".*\.keystore$",
     ],
     "patterns": [
         # Generic secret variables
@@ -80,14 +109,14 @@ DEFAULT_CONFIG = {
         r"ssh-rsa AAAA[0-9A-Za-z+/]+[=]{0,3}",
         # Generic alphanumeric secrets
         r'(?i)(api|secret|private|token|auth|key)[\s=:]+["\']?[a-zA-Z0-9+/]{32,}[=]{0,2}["\']?',
-    ]
+    ],
 }
 
 
 def load_config():
     """Load configuration from securegit.json file if it exists."""
     config = DEFAULT_CONFIG.copy()
-    
+
     # Look for config file in the following locations:
     config_paths = [
         # Local repository config
@@ -95,26 +124,39 @@ def load_config():
         # Global user config
         os.path.expanduser("~/.securegit.json"),
     ]
-    
+
     for config_path in config_paths:
         if os.path.exists(config_path):
             try:
-                with open(config_path, 'r') as f:
+                with open(config_path, "r") as f:
                     user_config = json.load(f)
                     print(f"🔧 Loaded configuration from {config_path}")
-                    
-                    # Update with user configuration
+
+                    # Handle standard configuration keys
                     for key, value in user_config.items():
-                        if key in config:
+                        # Handle expanding array configs (keys ending with _expand)
+                        if key.endswith("_expand") and isinstance(value, list):
+                            base_key = key[:-7]  # Remove "_expand" suffix
+                            if base_key in config and isinstance(
+                                config[base_key], list
+                            ):
+                                config[base_key].extend(value)
+                                print(
+                                    f"  ↪ Expanded {base_key} with {len(value)} additional items"
+                                )
+                        # Handle regular config replacement
+                        elif key in config:
                             config[key] = value
-                
+
                 # Once we find a valid config, stop looking
                 break
             except json.JSONDecodeError:
-                print(f"⚠️ Warning: Could not parse {config_path} as valid JSON. Using defaults.")
+                print(
+                    f"⚠️ Warning: Could not parse {config_path} as valid JSON. Using defaults."
+                )
             except Exception as e:
                 print(f"⚠️ Warning: Error loading config from {config_path}: {e}")
-    
+
     return config
 
 
@@ -172,12 +214,12 @@ def scan_file(filepath, patterns):
 def main():
     # Load configuration
     config = load_config()
-    
+
     # Check if hook is disabled in config
     if not config["enabled"]:
         print("✅ SecureGit-Hook is disabled in configuration. Skipping checks.")
         sys.exit(0)
-        
+
     files = get_staged_files()
     if not files or files == [""]:
         print("✅ No relevant files staged.")
