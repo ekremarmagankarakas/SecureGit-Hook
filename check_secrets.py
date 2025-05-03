@@ -132,11 +132,39 @@ def load_config():
                     user_config = json.load(f)
                     print(f"🔧 Loaded configuration from {config_path}")
 
-                    # Handle standard configuration keys
+                    # Process configuration with the following priority:
+                    # 1. Regular configs (direct replacement)
+                    # 2. Exclusions (_exclude suffix)
+                    # 3. Expansions (_expand suffix)
+
+                    # First apply regular direct replacements
                     for key, value in user_config.items():
-                        # Handle expanding array configs (keys ending with _expand)
+                        if not key.endswith("_exclude") and not key.endswith("_expand"):
+                            if key in config:
+                                config[key] = value
+
+                    # Then apply exclusions
+                    for key, value in user_config.items():
+                        if key.endswith("_exclude") and isinstance(value, list):
+                            base_key = key[:-8]  # Remove "_exclude" suffix
+                            if base_key in config and isinstance(
+                                config[base_key], list
+                            ):
+                                original_len = len(config[base_key])
+                                # Remove items that match those in the exclude list
+                                config[base_key] = [
+                                    item
+                                    for item in config[base_key]
+                                    if item not in value
+                                ]
+                                removed = original_len - len(config[base_key])
+                                print(f"  ↪ Excluded {removed} items from {base_key}")
+
+                    # Finally apply expansions
+                    for key, value in user_config.items():
                         if key.endswith("_expand") and isinstance(value, list):
                             base_key = key[:-7]  # Remove "_expand" suffix
+                            # Only expand if it wasn't completely replaced by a direct config
                             if base_key in config and isinstance(
                                 config[base_key], list
                             ):
@@ -144,9 +172,6 @@ def load_config():
                                 print(
                                     f"  ↪ Expanded {base_key} with {len(value)} additional items"
                                 )
-                        # Handle regular config replacement
-                        elif key in config:
-                            config[key] = value
 
                 # Once we find a valid config, stop looking
                 break

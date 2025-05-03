@@ -148,6 +148,29 @@ SecureGit-Hook can be customized through a JSON configuration file. The hook loo
 }
 ```
 
+### Excluding Items from Default Configurations
+
+You can exclude specific items from the default arrays by using the `_exclude` suffix:
+
+```json
+{
+    "prohibited_files_exclude": [
+        "id_rsa",
+        "id_dsa"
+    ],
+    "valid_extensions_exclude": [
+        ".env"
+    ],
+    "patterns_exclude": [
+        "PWD\\s*=\\s*[\"'].*[\"']"
+    ],
+    "prohibited_patterns_exclude": [
+        ".*\\.key$"
+    ]
+}
+```
+
+
 ### Extending Default Configurations
 
 You can extend the default arrays in the configuration by using the `_expand` suffix:
