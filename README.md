@@ -12,7 +12,6 @@ SecureGit-Hook is a security-focused tool that helps prevent sensitive informati
 - **Prohibited file detection**: Prevents committing common files that typically contain secrets (.env files, key files, etc.)
 - **Multiple installation options**: Install per-repository or globally across all your Git repositories
 - **Support for multiple file types**: Scans a wide variety of file formats including Python, JavaScript, TypeScript, Go, configuration files, and more
-- **Override capability**: Provides an option to override the hook when necessary, with clear warnings
 - **Easy installation**: Simple setup scripts for both individual and global installation
 
 ## What It Detects
@@ -79,9 +78,7 @@ Once installed, the hook runs automatically when you attempt to make a commit. I
 
 1. The commit will be blocked
 2. You'll see a list of files and line numbers containing potential secrets
-3. You'll be given the option to:
-   - Cancel the commit (recommended)
-   - Override the check by typing 'OVERRIDE' (use with caution)
+3. If there are any secrets found, the commit will be aborted
 
 Example output:
 ```
@@ -93,8 +90,7 @@ L Hardcoded secrets found in config.py:
   � Line 15: PASSWORD = "supersecret"
 
 =� Commit contains potential hardcoded secrets!
-
-Type 'OVERRIDE' to bypass and commit anyway, or anything else to cancel:
+=� ❌ Commit aborted. Clean your code before committing.
 ```
 
 ## Supported File Types

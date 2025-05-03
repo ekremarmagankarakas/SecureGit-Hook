@@ -179,18 +179,8 @@ def main():
         print("\n⚠️ WARNING: The following files should not be committed:")
         for file, reason in prohibited:
             print(f"  → {file}: {reason}")
-
-        answer = (
-            input(
-                "\nThese files typically contain sensitive information. Continue anyway? (yes/OVERRIDE/no): "
-            )
-            .strip()
-            .lower()
-        )
-        if answer not in ["yes", "override"]:
-            print("❌ Commit aborted. Please remove these files.")
-            sys.exit(1)
-        print("⚠️ Proceeding with potentially sensitive files...")
+        print("❌ Commit aborted. Please remove these files.")
+        sys.exit(1)
 
     # Filter for valid extensions for secret scanning
     files_to_scan = [
@@ -209,15 +199,8 @@ def main():
 
     if any_findings:
         print("\n🚫 Commit contains potential hardcoded secrets!")
-        answer = input(
-            "\nType 'OVERRIDE' to bypass and commit anyway, or anything else to cancel: "
-        ).strip()
-        if answer == "OVERRIDE":
-            print("⚠️ Commit forced. Proceed with caution.")
-            sys.exit(0)
-        else:
-            print("❌ Commit aborted. Clean your code before committing.")
-            sys.exit(1)
+        print("❌ Commit aborted. Clean your code before committing.")
+        sys.exit(1)
     else:
         print("✅ No hardcoded secrets found.")
 
