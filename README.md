@@ -148,6 +148,16 @@ SecureGit-Hook can be customized through a JSON configuration file. The hook loo
 }
 ```
 
+### Scanning the Entire Repository
+
+By default, SecureGit-Hook only scans files that are staged for commit. However, you can configure it to scan your entire repository instead:
+
+```json
+{
+    "scan_entire_repo": true
+}
+```
+
 ### Excluding Items from Default Configurations
 
 You can exclude specific items from the default arrays by using the `_exclude` suffix:
@@ -169,7 +179,6 @@ You can exclude specific items from the default arrays by using the `_exclude` s
     ]
 }
 ```
-
 
 ### Extending Default Configurations
 

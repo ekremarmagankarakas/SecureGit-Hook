@@ -9,6 +9,7 @@ import json
 # Default configuration values
 DEFAULT_CONFIG = {
     "enabled": True,
+    "scan_entire_repo": False,
     "valid_extensions": [
         ".py",
         ".js",
@@ -194,6 +195,15 @@ def get_staged_files():
     files = result.stdout.strip().split("\n")
     return [f for f in files if f]
 
+def get_all_repo_files():
+    """Get all files tracked by git in the repository."""
+    result = subprocess.run(
+        ["git", "ls-files"],
+        stdout=subprocess.PIPE,
+        text=True,
+    )
+    files = result.stdout.strip().split("\n")
+    return [f for f in files if f]
 
 def check_prohibited_files(files, config):
     prohibited_found = []
@@ -245,7 +255,12 @@ def main():
         print("✅ SecureGit-Hook is disabled in configuration. Skipping checks.")
         sys.exit(0)
 
-    files = get_staged_files()
+    if config["scan_entire_repo"]:
+        files = get_all_repo_files()
+        print("🔍 Scanning entire repository as configured...")
+    else:
+        files = get_staged_files()
+
     if not files or files == [""]:
         print("✅ No relevant files staged.")
         return
