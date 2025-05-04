@@ -203,6 +203,35 @@ You can extend the default arrays in the configuration by using the `_expand` su
 }
 ```
 
+
+### Allowlisting
+
+SecureGit-Hook supports allowlisting to ignore certain files, paths, patterns, or specific lines:
+
+```json
+{
+    "allowlist": {
+        "files": [
+            "example_config.json",
+            "test_credentials.py"
+        ],
+        "paths": [
+            "tests/fixtures/",
+            "examples/"
+        ],
+        "patterns": [
+            "TEST_API_KEY\\s*=\\s*[\"']test[\"']",
+            "DUMMY_PASSWORD"
+        ],
+        "lines": [
+            "config.py:42",
+            "auth.js:107"
+        ]
+    }
+}
+```
+
+
 ## Best Practices
 
 - **Never commit secrets**: Use environment variables or dedicated secret management solutions

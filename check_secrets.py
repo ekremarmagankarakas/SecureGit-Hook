@@ -10,6 +10,12 @@ import json
 DEFAULT_CONFIG = {
     "enabled": True,
     "scan_entire_repo": False,
+    "allowlist": {
+        "files": [],
+        "paths": [],
+        "patterns": [],
+        "lines": []
+    },
     "valid_extensions": [
         ".py",
         ".js",
@@ -205,10 +211,55 @@ def get_all_repo_files():
     files = result.stdout.strip().split("\n")
     return [f for f in files if f]
 
+def is_allowlisted(filepath, line_num=None, match_text=None, config=None):
+    """
+    Check if a file, line, or pattern match is allowlisted.
+    
+    Args:
+        filepath: Path to the file being checked
+        line_num: Line number in the file (optional)
+        match_text: The text that matched a pattern (optional)
+        config: Configuration dictionary
+        
+    Returns:
+        True if the item is allowlisted, False otherwise
+    """
+    if not config or "allowlist" not in config:
+        return False
+        
+    allowlist = config["allowlist"]
+    
+    # Check if the exact file is in the file allowlist
+    if filepath in allowlist.get("files", []):
+        return True
+    
+    # Check if the file is in an allowlisted path
+    for path in allowlist.get("paths", []):
+        if filepath.startswith(path) or re.match(path, filepath):
+            return True
+    
+    # Check for specific line allowlist
+    if line_num is not None:
+        line_key = f"{filepath}:{line_num}"
+        if line_key in allowlist.get("lines", []):
+            return True
+    
+    # Check if the match text is in the patterns allowlist
+    if match_text is not None:
+        for pattern in allowlist.get("patterns", []):
+            if re.search(pattern, match_text):
+                return True
+    
+    return False
+
 def check_prohibited_files(files, config):
     prohibited_found = []
 
     for file in files:
+        # Skip allowlisted files
+        if is_allowlisted(file, config=config):
+            continue
+            
         # Check exact filenames
         filename = os.path.basename(file)
         if filename in config["prohibited_files"]:
@@ -224,21 +275,34 @@ def check_prohibited_files(files, config):
     return prohibited_found
 
 
-def scan_file(filepath, patterns):
+def scan_file(filepath, config):
     findings = []
     try:
         with open(filepath, "r", encoding="utf-8") as file:
             content = file.read()
             line_num = 1
+            
+            # Check if the entire file is allowlisted
+            if is_allowlisted(filepath, config=config):
+                return []
+                
             for line in content.split("\n"):
-                for pattern in patterns:
+                # Skip allowlisted specific lines
+                if is_allowlisted(filepath, line_num, config=config):
+                    line_num += 1
+                    continue
+                    
+                for pattern in config["patterns"]:
                     matches = re.findall(pattern, line)
                     if matches:
                         for match in matches:
                             # If the match is a tuple (from capture groups), take the first element
-                            match_value = (
-                                match[0] if isinstance(match, tuple) else match
-                            )
+                            match_value = match[0] if isinstance(match, tuple) else match
+                            
+                            # Skip allowlisted patterns
+                            if is_allowlisted(filepath, line_num, match_value, config):
+                                continue
+                                
                             findings.append((line_num, match_value))
                 line_num += 1
     except Exception as e:
@@ -284,7 +348,7 @@ def main():
     any_findings = False
 
     for file in files_to_scan:
-        matches = scan_file(file, config["patterns"])
+        matches = scan_file(file, config)
         if matches:
             any_findings = True
             print(f"\n❌ Hardcoded secrets found in {file}:")
