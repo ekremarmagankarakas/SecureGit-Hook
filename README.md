@@ -125,7 +125,7 @@ When you attempt to make a Git commit:
 SecureGit-Hook can be customized through a JSON configuration file. The hook looks for:
 
 1. `securegit.json` in your repository root (for repository-specific settings)
-2. `~/.securegit.json` in your home directory (for user-specific settings)
+2. `~/.config/securegit.json` in your home directory (for user-specific settings)
 
 ### Configuration Options
 

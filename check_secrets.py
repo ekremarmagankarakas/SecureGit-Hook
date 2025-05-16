@@ -15,7 +15,7 @@ def load_config():
       # Local repository config
       os.path.join(os.getcwd(), "securegit.json"),
       # Global user config
-      os.path.expanduser("~/.securegit.json"),
+      os.path.expanduser("~/.config/securegit/securegit.json"),
   ]
 
   config_path = ""
@@ -103,7 +103,7 @@ def is_allowlisted(filepath, line_num=None, match_text=None, config=None):
 
 def check_prohibited_files(files, config):
   prohibited_found = []
-  
+
   # Get lists from config with fallbacks to empty lists
   prohibited_files = config.get("prohibited_files", [])
   prohibited_patterns = config.get("prohibited_patterns", [])
