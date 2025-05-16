@@ -25,15 +25,8 @@ def load_config():
       break
 
   if config_path == "":
-    return {
-      "enabled": True,
-      "scan_entire_repo": False,
-      "allowlist": {"files": [], "paths": [], "patterns": [], "lines": []},
-      "valid_extensions": [".py", ".js", ".ts", ".env", ".json", ".yaml", ".yml", ".conf"],
-      "prohibited_files": [".env", ".env.local", "credentials.json"],
-      "prohibited_patterns": [".*\\.pem$", ".*\\.key$"],
-      "patterns": ["API_KEY\\s*=\\s*[\"'].*[\"']", "PASSWORD\\s*=\\s*[\"'].*[\"']"]
-    }
+    print("❌ No config file found. Not checking for any leakages.")
+    sys.exit(0)
 
   # Load and parse the JSON config file
   try:
