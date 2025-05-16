@@ -53,7 +53,7 @@ SecureGit-Hook also prevents accidental commits of files that typically contain 
 To install the pre-commit hook in your current repository:
 
 ```bash
-python install_hook.py
+python install_hook_local.py
 ```
 
 This will install the hook only for the current Git repository.
@@ -132,6 +132,7 @@ SecureGit-Hook can be customized through a JSON configuration file. The hook loo
 ```json
 {
     "enabled": true,               // Set to false to disable all checks
+    "scan_entire_repo": false,     // Set to true to scan the entire repository
     "valid_extensions": [          // File extensions to scan
         ".py", ".js", ".ts"
     ],
@@ -147,62 +148,6 @@ SecureGit-Hook can be customized through a JSON configuration file. The hook loo
     ]
 }
 ```
-
-### Scanning the Entire Repository
-
-By default, SecureGit-Hook only scans files that are staged for commit. However, you can configure it to scan your entire repository instead:
-
-```json
-{
-    "scan_entire_repo": true
-}
-```
-
-### Excluding Items from Default Configurations
-
-You can exclude specific items from the default arrays by using the `_exclude` suffix:
-
-```json
-{
-    "prohibited_files_exclude": [
-        "id_rsa",
-        "id_dsa"
-    ],
-    "valid_extensions_exclude": [
-        ".env"
-    ],
-    "patterns_exclude": [
-        "PWD\\s*=\\s*[\"'].*[\"']"
-    ],
-    "prohibited_patterns_exclude": [
-        ".*\\.key$"
-    ]
-}
-```
-
-### Extending Default Configurations
-
-You can extend the default arrays in the configuration by using the `_expand` suffix:
-
-```json
-{
-    "prohibited_files_expand": [
-        "secrets.json", 
-        "custom_credentials.yml"
-    ],
-    "valid_extensions_expand": [
-        ".jsx", 
-        ".tsx"
-    ],
-    "patterns_expand": [
-        "MY_CUSTOM_SECRET\\s*=\\s*[\"'].*[\"']"
-    ],
-    "prohibited_patterns_expand": [
-        ".*\\.secret$"
-    ]
-}
-```
-
 
 ### Allowlisting
 
@@ -246,6 +191,9 @@ SecureGit-Hook supports allowlisting to ignore certain files, paths, patterns, o
 
 Make sure:
 - The hook is properly installed (check `.git/hooks/pre-commit` exists and is executable)
+- Your configuration file is correctly set up in one of the following locations:
+  - `securegit.json` in your repository root
+  - `~/.securegit.json` in your home directory
 - Your Git is configured to use hooks (not disabled globally)
 - Python is available in your PATH
 
