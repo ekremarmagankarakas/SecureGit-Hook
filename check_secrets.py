@@ -18,16 +18,31 @@ def load_config():
       os.path.expanduser("~/.securegit.json"),
   ]
 
-  config = ""
-  for config_path in config_paths:
-    if os.path.exists(config_path):
-      config = config_path
+  config_path = ""
+  for path in config_paths:
+    if os.path.exists(path):
+      config_path = path
       break
 
-  if config == "":
-    return {}
+  if config_path == "":
+    return {
+      "enabled": True,
+      "scan_entire_repo": False,
+      "allowlist": {"files": [], "paths": [], "patterns": [], "lines": []},
+      "valid_extensions": [".py", ".js", ".ts", ".env", ".json", ".yaml", ".yml", ".conf"],
+      "prohibited_files": [".env", ".env.local", "credentials.json"],
+      "prohibited_patterns": [".*\\.pem$", ".*\\.key$"],
+      "patterns": ["API_KEY\\s*=\\s*[\"'].*[\"']", "PASSWORD\\s*=\\s*[\"'].*[\"']"]
+    }
 
-  return config
+  # Load and parse the JSON config file
+  try:
+    with open(config_path, 'r') as f:
+      config = json.load(f)
+      return config
+  except (json.JSONDecodeError, IOError) as e:
+    print(f"⚠️ Error loading config file: {e}")
+    sys.exit(1)
 
 
 def get_staged_files():
@@ -95,6 +110,10 @@ def is_allowlisted(filepath, line_num=None, match_text=None, config=None):
 
 def check_prohibited_files(files, config):
   prohibited_found = []
+  
+  # Get lists from config with fallbacks to empty lists
+  prohibited_files = config.get("prohibited_files", [])
+  prohibited_patterns = config.get("prohibited_patterns", [])
 
   for file in files:
     # Skip allowlisted files
@@ -103,12 +122,12 @@ def check_prohibited_files(files, config):
 
     # Check exact filenames
     filename = os.path.basename(file)
-    if filename in config["prohibited_files"]:
+    if filename in prohibited_files:
       prohibited_found.append((file, "File should not be committed"))
       continue
 
     # Check regex patterns
-    for pattern in config["prohibited_patterns"]:
+    for pattern in prohibited_patterns:
       if re.match(pattern, file):
         prohibited_found.append((file, "File matches prohibited pattern"))
         break
@@ -127,24 +146,30 @@ def scan_file(filepath, config):
       if is_allowlisted(filepath, config=config):
         return []
 
+      # Get patterns from config with fallback to empty list
+      patterns = config.get("patterns", [])
+
       for line in content.split("\n"):
         # Skip allowlisted specific lines
         if is_allowlisted(filepath, line_num, config=config):
           line_num += 1
           continue
 
-        for pattern in config["patterns"]:
-          matches = re.findall(pattern, line)
-          if matches:
-            for match in matches:
-              # If the match is a tuple (from capture groups), take the first element
-              match_value = match[0] if isinstance(match, tuple) else match
+        for pattern in patterns:
+          try:
+            matches = re.findall(pattern, line)
+            if matches:
+              for match in matches:
+                # If the match is a tuple (from capture groups), take the first element
+                match_value = match[0] if isinstance(match, tuple) else match
 
-              # Skip allowlisted patterns
-              if is_allowlisted(filepath, line_num, match_value, config):
-                continue
+                # Skip allowlisted patterns
+                if is_allowlisted(filepath, line_num, match_value, config):
+                  continue
 
-              findings.append((line_num, match_value))
+                findings.append((line_num, match_value))
+          except re.error as re_err:
+            print(f"⚠️ Invalid regex pattern '{pattern}': {re_err}")
         line_num += 1
   except Exception as e:
     print(f"⚠️ Could not read {filepath}: {e}")
@@ -156,11 +181,11 @@ def main():
   config = load_config()
 
   # Check if hook is disabled in config
-  if not config["enabled"]:
+  if "enabled" in config and not config["enabled"]:
     print("✅ SecureGit-Hook is disabled in configuration. Skipping checks.")
     sys.exit(0)
 
-  if config["scan_entire_repo"]:
+  if "scan_entire_repo" in config and config["scan_entire_repo"]:
     files = get_all_repo_files()
     print("🔍 Scanning entire repository as configured...")
   else:
@@ -182,8 +207,9 @@ def main():
     sys.exit(1)
 
   # Filter for valid extensions for secret scanning
+  valid_extensions = config.get("valid_extensions", [])
   files_to_scan = [
-      f for f in files if any(f.endswith(ext) for ext in config["valid_extensions"])
+      f for f in files if any(f.endswith(ext) for ext in valid_extensions)
   ]
 
   any_findings = False
